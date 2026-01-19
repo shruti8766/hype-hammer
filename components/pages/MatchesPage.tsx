@@ -1,0 +1,196 @@
+import React, { useState } from 'react';
+import { Plus, Trophy, Calendar, Users, ArrowLeft, Play, Trash2, Edit } from 'lucide-react';
+import { AuctionStatus, SportType, MatchData, SportData } from '../../types';
+
+interface MatchesPageProps {
+  sportData: SportData;
+  setStatus: (status: AuctionStatus) => void;
+  onCreateMatch: (matchName: string) => void;
+  onSelectMatch: (matchId: string) => void;
+  onDeleteMatch: (matchId: string) => void;
+  onBackToSetup: () => void;
+}
+
+export const MatchesPage: React.FC<MatchesPageProps> = ({
+  sportData,
+  setStatus,
+  onCreateMatch,
+  onSelectMatch,
+  onDeleteMatch,
+  onBackToSetup
+}) => {
+  const [showNewMatchModal, setShowNewMatchModal] = useState(false);
+  const [newMatchName, setNewMatchName] = useState('');
+
+  const handleCreateMatch = () => {
+    if (newMatchName.trim()) {
+      onCreateMatch(newMatchName.trim());
+      setNewMatchName('');
+      setShowNewMatchModal(false);
+    }
+  };
+
+  const getSportDisplayName = () => {
+    if (sportData.sportType === SportType.CUSTOM && sportData.customSportName) {
+      return sportData.customSportName;
+    }
+    return sportData.sportType;
+  };
+
+  const getMatchStatusColor = (status: string) => {
+    switch (status) {
+      case 'SETUP': return 'text-gray-400';
+      case 'ONGOING': return 'text-yellow-500';
+      case 'COMPLETED': return 'text-green-500';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getMatchStatusLabel = (status: string) => {
+    switch (status) {
+      case 'SETUP': return 'Not Started';
+      case 'ONGOING': return 'In Progress';
+      case 'COMPLETED': return 'Completed';
+      default: return status;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0d0a09] via-[#1a1410] to-[#0d0a09] text-white p-8">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto">
+        <button 
+            onClick={() => setStatus(AuctionStatus.HOME)}
+            className="flex items-center gap-3 bg-[#1a1410]/80 border border-[#c5a059]/20 backdrop-blur-xl px-6 py-3 rounded-full text-[#c5a059] hover:bg-[#c5a059] hover:text-[#0d0a09] transition-all shadow-lg"
+            >
+                <ArrowLeft size={18} />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Back to Sport Selection</span>
+        </button>
+
+        <div className="flex items-center justify-between mt-12 mb-8">
+          <div>
+            <h1 className="text-4xl font-bold mb-2 text-[#c5a059]">
+              {getSportDisplayName()} Matches
+            </h1>
+            <p className="text-gray-400">
+              Manage multiple matches for {getSportDisplayName().toLowerCase()}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowNewMatchModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-[#c5a059] text-[#0d0a09] rounded-lg font-semibold hover:bg-[#d4af6a] transition-all"
+          >
+            <Plus className="w-5 h-5" />
+            New Match
+          </button>
+        </div>
+
+        {/* Matches Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sportData.matches.length === 0 ? (
+            <div className="col-span-full text-center py-20">
+              <Trophy className="w-16 h-16 mx-auto mb-4 text-gray-600" />
+              <h3 className="text-xl font-semibold mb-2 text-gray-400">No Matches Yet</h3>
+              <p className="text-gray-500 mb-6">Create your first match to get started</p>
+              <button
+                onClick={() => setShowNewMatchModal(true)}
+                className="px-6 py-3 bg-[#c5a059] text-[#0d0a09] rounded-lg font-semibold hover:bg-[#d4af6a] transition-all"
+              >
+                Create Match
+              </button>
+            </div>
+          ) : (
+            sportData.matches.map((match) => (
+              <div
+                key={match.id}
+                className="bg-[#1a1410] border border-[#2a2016] rounded-xl p-6 hover:border-[#c5a059] transition-all group"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-1 text-[#c5a059]">{match.name}</h3>
+                    <p className={`text-sm ${getMatchStatusColor(match.status)}`}>
+                      {getMatchStatusLabel(match.status)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => onDeleteMatch(match.id)}
+                    className="opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-400 transition-all p-2"
+                    title="Delete Match"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(match.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Users className="w-4 h-4" />
+                    {match.teams.length} Teams • {match.players.length} Players
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <Trophy className="w-4 h-4" />
+                    {match.history.length} Players Sold
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => onSelectMatch(match.id)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#2a2016] text-[#c5a059] border border-[#c5a059] rounded-lg font-semibold hover:bg-[#c5a059] hover:text-[#0d0a09] transition-all"
+                >
+                  <Play className="w-4 h-4" />
+                  {match.status === 'COMPLETED' ? 'View Match' : 'Continue Match'}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* New Match Modal */}
+      {showNewMatchModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#1a1410] border border-[#c5a059] rounded-xl p-8 max-w-md w-full">
+            <h2 className="text-2xl font-bold mb-6 text-[#c5a059]">Create New Match</h2>
+            
+            <div className="mb-6">
+              <label className="block text-sm font-semibold mb-2 text-gray-300">
+                Match Name
+              </label>
+              <input
+                type="text"
+                value={newMatchName}
+                onChange={(e) => setNewMatchName(e.target.value)}
+                placeholder="e.g., Premier League 2024, Season 1"
+                className="w-full px-4 py-3 bg-[#0d0a09] border border-[#2a2016] rounded-lg text-white focus:border-[#c5a059] outline-none"
+                autoFocus
+                onKeyDown={(e) => e.key === 'Enter' && handleCreateMatch()}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowNewMatchModal(false);
+                  setNewMatchName('');
+                }}
+                className="flex-1 px-4 py-3 bg-[#2a2016] text-gray-300 rounded-lg font-semibold hover:bg-[#3a3026] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateMatch}
+                disabled={!newMatchName.trim()}
+                className="flex-1 px-4 py-3 bg-[#c5a059] text-[#0d0a09] rounded-lg font-semibold hover:bg-[#d4af6a] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
